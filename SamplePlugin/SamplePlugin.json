@@ -1,12 +1,12 @@
 {
-  "Author": "your name here",
-  "Name": "Sample Plugin",
-  "Punchline": "A short one-liner that shows up in /xlplugins.",
-  "Description": "A description that shows up in /xlplugins. List any major slash-command(s).",
+  "Author": "Sonzai416",
+  "Name": "Dynamis",
+  "Punchline": "Cast aside monotony!",
+  "Description": "Seamlessly attach actions on Penumbra to actions in game.",
   "ApplicableVersion": "any",
   "Tags": [
-    "sample",
-    "plugin",
-    "goats"
+    "dynamis",
+    "action",
+    "penumbra"
   ]
 }

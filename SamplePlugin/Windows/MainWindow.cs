@@ -1,23 +1,23 @@
-﻿using System;
+using System;
+using System.Collections.Generic;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 using Lumina.Excel.Sheets;
-
 namespace SamplePlugin.Windows;
-
 public class MainWindow : Window, IDisposable
 {
-    private string GoatImagePath;
     private Plugin Plugin;
-
+    public uint ID = 0;
+    public bool Ready = false;
+    private string Name = "";
     // We give this window a hidden ID using ##.
     // The user will see "My Amazing Window" as window title,
     // but for ImGui the ID is "My Amazing Window##With a hidden ID"
-    public MainWindow(Plugin plugin, string goatImagePath)
-        : base("My Amazing Window##With a hidden ID", ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse)
+    public MainWindow(Plugin plugin)
+        : base("##Main", ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse)
     {
         SizeConstraints = new WindowSizeConstraints
         {
@@ -25,7 +25,6 @@ public class MainWindow : Window, IDisposable
             MaximumSize = new Vector2(float.MaxValue, float.MaxValue)
         };
 
-        GoatImagePath = goatImagePath;
         Plugin = plugin;
     }
 
@@ -33,15 +32,7 @@ public class MainWindow : Window, IDisposable
 
     public override void Draw()
     {
-        ImGui.TextUnformatted($"The random config bool is {Plugin.Configuration.SomePropertyToBeSavedAndWithADefault}");
-
-        if (ImGui.Button("Show Settings"))
-        {
-            Plugin.ToggleConfigUI();
-        }
-
-        ImGui.Spacing();
-
+        //FFXIVClientStructs.FFXIV.Client.Game.ActionManager.
         // Normally a BeginChild() would have to be followed by an unconditional EndChild(),
         // ImRaii takes care of this after the scope ends.
         // This works for all ImGui functions that require specific handling, examples are BeginTable() or Indent().
@@ -50,22 +41,6 @@ public class MainWindow : Window, IDisposable
             // Check if this child is drawing
             if (child.Success)
             {
-                ImGui.TextUnformatted("Have a goat:");
-                var goatImage = Plugin.TextureProvider.GetFromFile(GoatImagePath).GetWrapOrDefault();
-                if (goatImage != null)
-                {
-                    using (ImRaii.PushIndent(55f))
-                    {
-                        ImGui.Image(goatImage.Handle, goatImage.Size);
-                    }
-                }
-                else
-                {
-                    ImGui.TextUnformatted("Image not found.");
-                }
-
-                ImGuiHelpers.ScaledDummy(20.0f);
-
                 // Example for other services that Dalamud provides.
                 // ClientState provides a wrapper filled with information about the local player object and client.
 
@@ -75,26 +50,11 @@ public class MainWindow : Window, IDisposable
                     ImGui.TextUnformatted("Our local player is currently not loaded.");
                     return;
                 }
-
-                if (!localPlayer.ClassJob.IsValid)
-                {
-                    ImGui.TextUnformatted("Our current job is currently not valid.");
-                    return;
-                }
-
+                // Plugin.DataManager.GetExcelSheet<>().TryGetRow(, out var row);
                 // If you want to see the Macro representation of this SeString use `ToMacroString()`
-                ImGui.TextUnformatted($"Our current job is ({localPlayer.ClassJob.RowId}) \"{localPlayer.ClassJob.Value.Abbreviation}\"");
-
-                // Example for quarrying Lumina directly, getting the name of our current area.
-                var territoryId = Plugin.ClientState.TerritoryType;
-                if (Plugin.DataManager.GetExcelSheet<TerritoryType>().TryGetRow(territoryId, out var territoryRow))
-                {
-                    ImGui.TextUnformatted($"We are currently in ({territoryId}) \"{territoryRow.PlaceName.Value.Name}\"");
-                }
-                else
-                {
-                    ImGui.TextUnformatted("Invalid territory.");
-                }
+                if (ID != 0) if (Plugin.DataManager.GetExcelSheet<Lumina.Excel.Sheets.Action>().TryGetRow(ID, out var N)) Name = N.Name.ExtractText();
+                ImGui.TextUnformatted($"You have used {Name}.");
+                Ready = false;
             }
         }
     }
