@@ -15,7 +15,7 @@ namespace SamplePlugin.Handler
     {
         private static uint ID = 0;
         public static Handler.Action* Manager;
-        public static MainWindow Thing;
+        public static List Actions;
         private delegate byte UseActionDelegate(nint actionManager, uint actionType, uint actionID, ulong targetedActorID, uint param, uint useType, int pvp, nint a8);
         public delegate void UseActionEventDelegate(nint actionManager, uint actionType, uint actionID, ulong targetedActorID, uint param, uint useType, int pvp, nint a8, byte ret);
         public static event UseActionEventDelegate OnUseAction;
@@ -29,8 +29,7 @@ namespace SamplePlugin.Handler
         {
             if (ID != 0)
             {
-                Thing.Ready = true;
-                Thing.ID = ID;
+                Actions.Add(ID);
                 ID = 0;
             }
             ReceiveActionEffectHook.Original(sourceActorID, sourceActor, vectorPosition, effectHeader, effectArray, effectTrail);
@@ -45,8 +44,7 @@ namespace SamplePlugin.Handler
         }
         public static void Initialize() {
             Manager = (Handler.Action*) FFXIVClientStructs.FFXIV.Client.Game.ActionManager.Instance();
-            var A = (nint)FFXIVClientStructs.FFXIV.Client.Game.ActionManager.MemberFunctionPointers.UseAction;
-            UseActionHook = DalamudApi.GameInteropProvider.HookFromAddress<UseActionDelegate>(A, UseActionDetour);
+            UseActionHook = DalamudApi.GameInteropProvider.HookFromAddress<UseActionDelegate>((nint)FFXIVClientStructs.FFXIV.Client.Game.ActionManager.MemberFunctionPointers.UseAction, UseActionDetour);
             ReceiveActionEffectHook = DalamudApi.GameInteropProvider.HookFromAddress<ReceiveActionEffectDelegate>(DalamudApi.SigScanner.ScanModule("40 55 56 57 41 54 41 55 41 56 41 57 48 8D AC 24"), ReceiveActionEffectDetour);
             UseActionHook.Enable();
             ReceiveActionEffectHook.Enable();

@@ -32,26 +32,11 @@ public class MainWindow : Window, IDisposable
 
     public override void Draw()
     {
-        //FFXIVClientStructs.FFXIV.Client.Game.ActionManager.
-        // Normally a BeginChild() would have to be followed by an unconditional EndChild(),
-        // ImRaii takes care of this after the scope ends.
-        // This works for all ImGui functions that require specific handling, examples are BeginTable() or Indent().
         using (var child = ImRaii.Child("SomeChildWithAScrollbar", Vector2.Zero, true))
         {
             // Check if this child is drawing
             if (child.Success)
             {
-                // Example for other services that Dalamud provides.
-                // ClientState provides a wrapper filled with information about the local player object and client.
-
-                var localPlayer = Plugin.ClientState.LocalPlayer;
-                if (localPlayer == null)
-                {
-                    ImGui.TextUnformatted("Our local player is currently not loaded.");
-                    return;
-                }
-                // Plugin.DataManager.GetExcelSheet<>().TryGetRow(, out var row);
-                // If you want to see the Macro representation of this SeString use `ToMacroString()`
                 if (ID != 0) if (Plugin.DataManager.GetExcelSheet<Lumina.Excel.Sheets.Action>().TryGetRow(ID, out var N)) Name = N.Name.ExtractText();
                 ImGui.TextUnformatted($"You have used {Name}.");
                 Ready = false;

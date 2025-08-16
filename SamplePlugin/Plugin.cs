@@ -6,6 +6,7 @@ using Dalamud.Interface.Windowing;
 using Dalamud.Plugin.Services;
 using SamplePlugin.Windows;
 using SamplePlugin.Handler;
+using System.Collections.Generic;
 
 namespace SamplePlugin;
 
@@ -18,7 +19,9 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService] internal static IDataManager DataManager { get; private set; } = null!;
     [PluginService] internal static IPluginLog Log { get; private set; } = null!;
 
-    private const string CommandName = "/makro";
+    private const string CommandName = "/dynamis";
+
+    private List<uint> Actions = new();
 
     public Configuration Configuration { get; init; }
 
@@ -34,7 +37,7 @@ public sealed class Plugin : IDalamudPlugin
         // You might normally want to embed resources and load them from the manifest stream
         ConfigWindow = new ConfigWindow(this);
         MainWindow = new MainWindow(this);
-        Hook.Thing = MainWindow;
+        Hook.Actions = Actions;
         Hook.Initialize();
 
         WindowSystem.AddWindow(ConfigWindow);
