@@ -60,7 +60,7 @@ namespace Dynamis.Handler
                                 int.TryParse(Level, out Upgrade);
                                 var Time = 0.0;
                                 Double.TryParse(Split[1], out Time);
-                                Update_Package(Split[2], Time + 0.1, Upgrade);
+                                Update_Package(Split[2], Time + 0.1, Upgrade, false);
                             }
                     }
                 }
@@ -68,7 +68,7 @@ namespace Dynamis.Handler
             ReceiveActionEffectHook.Original(sourceActorID, sourceActor, vectorPosition, effectHeader, effectArray, effectTrail);
         }
 
-        private static void Update_Package(string Package, double Time, int Upgrade)
+        private static void Update_Package(string Package, double Time, int Upgrade, bool Instant)
         {
             if (Packages.ContainsKey(Package))
             {
@@ -84,7 +84,7 @@ namespace Dynamis.Handler
                 }
                 else
                 {
-                    Queues.Add(ValueTuple.Create(Package, 0.1, Upgrade));
+                    Queues.Add(ValueTuple.Create(Package, Instant ? 0.0 : 0.1, Upgrade));
                     if (Time > 0.1) Queues.Add(ValueTuple.Create(Package, Time + 0.1, -Upgrade));
                 }
             }
@@ -111,13 +111,18 @@ namespace Dynamis.Handler
             }
         }
 
+        private static Dictionary<string, int> Gauges = new();
+
         private static string All_Jobs = "PLD WAR DRK GNB MNK DRG NIN SAM RPR VPR WHM SCH AST SGE BRD MCH DNC BLM SMN RDM PCT";
         private static void Update(IFramework F)
         {
             foreach (var Key in Levels.Keys) if (All_Jobs.Contains(Key.Split(" ")[0]))
                 {
                     var New_Level = Jobs.Get_Gauge(Key);
-                    if (New_Level != Levels[Key]) Update_Package(Key, 0.1, New_Level - Levels[Key]);
+                    if (!Gauges.ContainsKey(Key)) Gauges.Add(Key, New_Level);
+                    var Delta = New_Level - Gauges[Key];
+                    if (Delta != 0) Update_Package(Key, 0.1, Delta, true);
+                    Gauges[Key] = New_Level;
                 }
             var Removed = new List<int>();
             for (var I = 0; I < Queues.Count; I++)
@@ -125,7 +130,7 @@ namespace Dynamis.Handler
                 Queues[I] = ValueTuple.Create(Queues[I].Item1, Queues[I].Item2 - F.UpdateDelta.TotalSeconds, Queues[I].Item3);
                 if (Queues[I].Item2 <= 0)
                 {
-                    Update_Package(Queues[I].Item1, double.NegativeInfinity, Queues[I].Item3);
+                    Update_Package(Queues[I].Item1, double.NegativeInfinity, Queues[I].Item3, true);
                     Removed.Add(I);
                 }
             }
