@@ -102,13 +102,18 @@ namespace Dynamis.Handler
             Levels.Clear();
             Actions.Clear();
             var Index = 0;
-            foreach (var Package in Packages.Keys)
-            {
-                Levels.Add(Package, 0);
-                if (Packages[Package].Count == 0) continue;
-                foreach (var Part in Packages[Package]) if (Part != Packages[Package][Index] && Part.Length != 0) Setter(Part, false);
-                if (Packages[Package][Index].Length != 0) Setter(Packages[Package][Index], true);
-            }
+            if (Client.LocalPlayer != null)
+                foreach (var Package in Packages.Keys)
+                {
+                    if (All_Jobs.Contains(Package.Split(" ")[0]))
+                    {
+                        Levels.Add(Package, Jobs.Get_Gauge(Package));
+                    }
+                    else Levels.Add(Package, 0);
+                    if (Packages[Package].Count == 0) continue;
+                    foreach (var Part in Packages[Package]) if (Part != Packages[Package][Index] && Part.Length != 0) Setter(Part, false);
+                    if (Packages[Package][Index].Length != 0) Setter(Packages[Package][Index], true);
+                }
         }
 
         private static Dictionary<string, int> Gauges = new();
