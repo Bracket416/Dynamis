@@ -116,30 +116,33 @@ namespace Dynamis.Handler
         private static string All_Jobs = "PLD WAR DRK GNB MNK DRG NIN SAM RPR VPR WHM SCH AST SGE BRD MCH DNC BLM SMN RDM PCT";
         private static void Update(IFramework F)
         {
-            foreach (var Key in Levels.Keys) if (All_Jobs.Contains(Key.Split(" ")[0]))
-                {
-                    var New_Level = Jobs.Get_Gauge(Key);
-                    if (!Gauges.ContainsKey(Key)) Gauges.Add(Key, New_Level);
-                    var Delta = New_Level - Gauges[Key];
-                    if (Delta != 0) Update_Package(Key, 0.1, Delta, true);
-                    Gauges[Key] = New_Level;
-                }
-            var Removed = new List<int>();
-            for (var I = 0; I < Queues.Count; I++)
-            {
-                Queues[I] = ValueTuple.Create(Queues[I].Item1, Queues[I].Item2 - F.UpdateDelta.TotalSeconds, Queues[I].Item3);
-                if (Queues[I].Item2 <= 0)
-                {
-                    Update_Package(Queues[I].Item1, double.NegativeInfinity, Queues[I].Item3, true);
-                    Removed.Add(I);
-                }
-            }
-            Removed.Reverse();
-            foreach (var I in Removed) Queues.RemoveAt(I);
             if (Client.LocalPlayer != null)
             {
-                if (Client.LocalPlayer.IsDead || Map_ID != Client.MapId) Reset();
-                Map_ID = Client.MapId;
+                foreach (var Key in Levels.Keys) if (All_Jobs.Contains(Key.Split(" ")[0]))
+                    {
+                        var New_Level = Jobs.Get_Gauge(Key);
+                        if (!Gauges.ContainsKey(Key)) Gauges.Add(Key, New_Level);
+                        var Delta = New_Level - Gauges[Key];
+                        if (Delta != 0) Update_Package(Key, 0.1, Delta, true);
+                        Gauges[Key] = New_Level;
+                    }
+                var Removed = new List<int>();
+                for (var I = 0; I < Queues.Count; I++)
+                {
+                    Queues[I] = ValueTuple.Create(Queues[I].Item1, Queues[I].Item2 - F.UpdateDelta.TotalSeconds, Queues[I].Item3);
+                    if (Queues[I].Item2 <= 0)
+                    {
+                        Update_Package(Queues[I].Item1, double.NegativeInfinity, Queues[I].Item3, true);
+                        Removed.Add(I);
+                    }
+                }
+                Removed.Reverse();
+                foreach (var I in Removed) Queues.RemoveAt(I);
+                if (Client.LocalPlayer != null)
+                {
+                    if (Client.LocalPlayer.IsDead || Map_ID != Client.MapId) Reset();
+                    Map_ID = Client.MapId;
+                }
             }
         }
 
