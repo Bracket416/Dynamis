@@ -4,11 +4,21 @@ using Dalamud.Plugin;
 using System.IO;
 using Dalamud.Interface.Windowing;
 using Dalamud.Plugin.Services;
-using SamplePlugin.Windows;
-using SamplePlugin.Handler;
+using Dynamis.Windows;
+using Dynamis.Handler;
 using System.Collections.Generic;
+using Penumbra.Api;
+using Penumbra.Api.Api;
+using Penumbra.Api.Enums;
+using Penumbra.Api.Helpers;
+using Penumbra.Api.IpcSubscribers;
+using FFXIVClientStructs.FFXIV.Client.Game.Object;
+using System;
+using System.Linq;
+using System.Collections.ObjectModel;
+using FFXIVClientStructs.FFXIV.Common.Lua;
 
-namespace SamplePlugin;
+namespace Dynamis;
 
 public sealed class Plugin : IDalamudPlugin
 {
@@ -21,28 +31,59 @@ public sealed class Plugin : IDalamudPlugin
 
     private const string CommandName = "/dynamis";
 
-    private List<uint> Actions = new();
+    private Dictionary<uint, uint> Actions = new();
+
+    private TrySetMod Setter;
+
+    public Guid C;
 
     public Configuration Configuration { get; init; }
 
-    public readonly WindowSystem WindowSystem = new("SamplePlugin");
+    public readonly WindowSystem WindowSystem = new("Dynamis");
     private ConfigWindow ConfigWindow { get; init; }
     private MainWindow MainWindow { get; init; }
 
+    public void Reset()
+    {
+        Hook.Reset();
+    }
+
+    public PenumbraApiEc Set(string Path, bool State)
+    {
+        var Split_Path = Path.Split("/");
+        return Setter.Invoke(C, string.Join("/", Split_Path.SkipLast(1)), State, Split_Path[^1]);
+    }
+
+    public void Update_Collection(string ID) => Guid.TryParse(ID, out C);
+
     public Plugin(IDalamudPluginInterface I)
     {
+        
         DalamudApi.Initialize(this, I);
         Configuration = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
 
         // You might normally want to embed resources and load them from the manifest stream
+        C = Configuration.C;
         ConfigWindow = new ConfigWindow(this);
         MainWindow = new MainWindow(this);
+        MainWindow.Actions = Actions;
+        Setter = new TrySetMod(I);
+        MainWindow.Log = Log;
+        MainWindow.Collection_ID = C.ToString();
+        Hook.Log = Log;
+        Hook.Setter = Set;
         Hook.Actions = Actions;
+        Hook.Client = ClientState;
         Hook.Initialize();
-
+        Hook.Mapping = Configuration.Mapping;
+        Hook.Packages = Configuration.Packages;
+        MainWindow.Mapping_Reference = Hook.Mapping;
+        MainWindow.Packages_Reference = Hook.Packages;
+        MainWindow.Levels = Hook.Levels;
+        MainWindow.Copy_Reference();
         WindowSystem.AddWindow(ConfigWindow);
         WindowSystem.AddWindow(MainWindow);
-
+        
         CommandManager.AddHandler(CommandName, new CommandInfo(OnCommand)
         {
             HelpMessage = "A useful message to display in /xlhelp"
@@ -59,8 +100,8 @@ public sealed class Plugin : IDalamudPlugin
 
         // Add a simple message to the log with level set to information
         // Use /xllog to open the log window in-game
-        // Example Output: 00:57:54.959 | INF | [SamplePlugin] ===A cool log message from Sample Plugin===
-        Log.Information($"===A cool log message from {PluginInterface.Manifest.Name}===");
+        // Example Output: 00:57:54.959 | INF | [Dynamis] ===A cool log message from Sample Plugin===
+        //Log.Information($"===A cool log message from {PluginInterface.Manifest.Name}===");
     }
 
     public void Dispose()
@@ -69,13 +110,14 @@ public sealed class Plugin : IDalamudPlugin
 
         ConfigWindow.Dispose();
         MainWindow.Dispose();
+        Hook.Dispose();
+        DalamudApi.Dispose();
 
         CommandManager.RemoveHandler(CommandName);
     }
 
     private void OnCommand(string command, string args)
     {
-        // In response to the slash command, toggle the display status of our main ui
         ToggleMainUI();
     }
 

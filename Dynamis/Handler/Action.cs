@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace SamplePlugin.Handler
+namespace Dynamis.Handler
 {
     [StructLayout(LayoutKind.Explicit)]
     public struct Action
