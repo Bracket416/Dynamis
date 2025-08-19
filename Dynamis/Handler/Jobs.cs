@@ -15,6 +15,8 @@ namespace Dynamis.Handler
         public static List<string> Gauges = new List<string> { };
         public static int Get_Gauge(string Gauge)
         {
+            if (Manager == null) return 0;
+            if (Manager is null) return 0;
             switch (Gauge)
             {
                 case "PLD Oath Gauge": return Manager->Paladin.OathGauge;
